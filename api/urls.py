@@ -1,16 +1,16 @@
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.routers import DefaultRouter
+from .views import ClientViewSet, CoachViewSet, RecommendationViewSet, MealViewSet, WorkoutplanViewSet
 
+router = DefaultRouter()
+router.register('clients', ClientViewSet)
+router.register('coaches', CoachViewSet)
+router.register('recommendations', RecommendationViewSet)
+router.register('workoutpalns', WorkoutplanViewSet)
+router.register('meals', MealViewSet)
 
 urlpatterns = [
-
-    # Schema generation endpoint
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    # Swagger UI
-    path('docs/', SpectacularSwaggerView.as_view(url_name='schema')),
-
-    path('token/', TokenObtainPairView.as_view()),
-    path('refresh-token/', TokenRefreshView.as_view()),
+    
+    path('', include(router.urls)),
     
 ]
