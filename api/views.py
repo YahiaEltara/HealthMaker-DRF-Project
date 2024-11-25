@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from .models import Client, Coach, Recommendation, Meal, Workoutplan
 from . serializers import ClientSerializer, CoachSerializer, RecommendationSerializer, MealSerializer, WorkoutplanSerializer
 from rest_framework.authentication import BasicAuthentication
@@ -37,6 +37,9 @@ class RecommendationViewSet(viewsets.ModelViewSet):
 class MealViewSet(viewsets.ModelViewSet):
     queryset = Meal.objects.all()
     serializer_class = MealSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['client__name', 'coach__name']
+
     def update(self, request, *args, **kwargs):
         """
         Override PUT method to allow partial updates.
