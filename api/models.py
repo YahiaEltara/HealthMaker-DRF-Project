@@ -1,6 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import User
-
+from django.contrib.auth.models import User, AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 
@@ -13,13 +15,16 @@ class Client(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email = models.EmailField(max_length=20)
-    age = models.PositiveIntegerField(max_length=2)
+    age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
     gender = models.CharField(max_length=255, choices= [('male', 'Male'),('female', 'Female')])
     weight = models.FloatField()
     height = models.FloatField()
     fitness_goal = models.CharField(max_length=255, choices= choices)
     created_at = models.DateTimeField(auto_now_add=True)
     coach = models.ForeignKey('Coach', on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.user.username
 
 
 
@@ -28,10 +33,12 @@ class Client(models.Model):
 class Coach(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email = models.EmailField(max_length=20)
-    age = models.PositiveIntegerField(max_length=2)
+    age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
     gender = models.CharField(max_length=255, choices= [('male', 'Male'),('female', 'Female')])
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
 
 
 
@@ -42,6 +49,9 @@ class Recommendation(models.Model):
     recommendation_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'client: {str(self.clients)} - coach: {str(self.coaches)} recommendation'
+
 
 
 
@@ -51,9 +61,12 @@ class Workoutplan(models.Model):
     coaches = models.ForeignKey(Coach, on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     details = models.TextField()
-    duration = models.PositiveIntegerField()
-    calories_burned = models.FloatField()
+    duration = models.TextField(help_text= 'minutes/once', max_length=255)
+    target_calories_burned = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'client: {str(self.client)} - coach: {str(self.coaches)} - Workout Plan'
 
 
 
@@ -72,3 +85,6 @@ class Meal(models.Model):
     eating_time = models.TimeField()
     created_at = models.DateField(auto_now_add=True)
     workout_plans = models.ForeignKey(Workoutplan, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f'{self.meal_type} for {self.workout_plans.client}'
