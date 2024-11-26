@@ -39,6 +39,7 @@ class MealViewSet(viewsets.ModelViewSet):
     serializer_class = MealSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['client__name', 'coach__name']
+    lookup_field = 'slug'
 
     def update(self, request, *args, **kwargs):
         """
@@ -55,5 +56,4 @@ class MealViewSet(viewsets.ModelViewSet):
 class WorkoutplanViewSet(viewsets.ModelViewSet):
     queryset = Workoutplan.objects.all()
     serializer_class = WorkoutplanSerializer
-    authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'

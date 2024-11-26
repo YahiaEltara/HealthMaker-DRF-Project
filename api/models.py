@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.text import slugify
 
 
 
@@ -64,6 +65,11 @@ class Workoutplan(models.Model):
     duration = models.TextField(help_text= 'minutes/once', max_length=255)
     target_calories_burned = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(blank=True, null=True, db_index=True)
+    def save (self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(str(self.name))
+        super(Workoutplan, self).save(*args, **kwargs)
 
     def __str__(self):
         return f'client: {str(self.client)} - coach: {str(self.coaches)} - Workout Plan'
@@ -85,6 +91,11 @@ class Meal(models.Model):
     eating_time = models.TimeField()
     created_at = models.DateField(auto_now_add=True)
     workout_plans = models.ForeignKey(Workoutplan, on_delete=models.PROTECT)
+    slug = models.SlugField(blank=True, null=True, db_index=True)
+    def save (self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.meal_type)
+        super(Meal, self).save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.meal_type} for {self.workout_plans.client}'
