@@ -4,6 +4,9 @@ from . serializers import ClientSerializer, CoachSerializer, RecommendationSeria
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from utils import CustomPagination
+
+
 
 
 
@@ -38,6 +41,7 @@ class MealViewSet(viewsets.ModelViewSet):
     queryset = Meal.objects.all()
     serializer_class = MealSerializer
     filter_backends = [filters.SearchFilter]
+    pagination_class = CustomPagination
     search_fields = ['client__name', 'coach__name']
     lookup_field = 'slug'
 
