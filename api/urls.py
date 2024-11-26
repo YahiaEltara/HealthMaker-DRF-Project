@@ -6,7 +6,7 @@ router = DefaultRouter()
 router.register('clients', ClientViewSet)
 router.register('coaches', CoachViewSet)
 router.register('recommendations', RecommendationViewSet)
-router.register('workoutpalns', WorkoutplanViewSet)
+router.register('workoutplans', WorkoutplanViewSet)
 router.register('meals', MealViewSet)
 
 urlpatterns = [

@@ -90,7 +90,7 @@ class Meal(models.Model):
     total_calories = models.FloatField()
     eating_time = models.TimeField()
     created_at = models.DateField(auto_now_add=True)
-    workout_plans = models.ForeignKey(Workoutplan, on_delete=models.PROTECT)
+    workout_plan = models.ForeignKey(Workoutplan, on_delete=models.PROTECT, related_name= 'meals', blank= True, null=True)
     slug = models.SlugField(blank=True, null=True, db_index=True)
     def save (self, *args, **kwargs):
         if not self.slug:
@@ -98,4 +98,13 @@ class Meal(models.Model):
         super(Meal, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.meal_type} for {self.workout_plans.client}'
+        return f'{self.meal_type} for {self.workout_plan.client}'
+    
+    class Meta:
+        ordering = ['eating_time']
+        constraints = [
+            models.UniqueConstraint(fields= ['meal_type', 'workout_plan'], name= 'unique_meal_user'),
+        ]
+        indexes = [
+            models.Index(fields=  ['meal_type', 'workout_plan']),
+        ]

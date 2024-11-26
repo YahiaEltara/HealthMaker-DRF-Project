@@ -4,8 +4,8 @@ from . serializers import ClientSerializer, CoachSerializer, RecommendationSeria
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from utils import CustomPagination
-
+from .utils import CustomPagination
+from drf_spectacular.utils import extend_schema
 
 
 
@@ -44,7 +44,8 @@ class MealViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     search_fields = ['client__name', 'coach__name']
     lookup_field = 'slug'
-
+    @extend_schema(
+        description="This endpoint allow updating a specific meal attributes or totally",)
     def update(self, request, *args, **kwargs):
         """
         Override PUT method to allow partial updates.
