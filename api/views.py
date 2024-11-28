@@ -4,9 +4,9 @@ from . serializers import ClientSerializer, CoachSerializer, RecommendationSeria
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .utils import CustomPagination
+from .utils import CustomPagination, get_user_related_field
 from drf_spectacular.utils import extend_schema
-
+from .permissions import IsClientOrAdminOrReadOnly, IsCoachOrAdminOrReadOnly
 
 
 
@@ -16,7 +16,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsClientOrAdminOrReadOnly]
 
 
 
@@ -25,7 +25,7 @@ class CoachViewSet(viewsets.ModelViewSet):
     queryset = Coach.objects.all()
     serializer_class = CoachSerializer
     authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCoachOrAdminOrReadOnly]
 
 
 
@@ -33,16 +33,22 @@ class RecommendationViewSet(viewsets.ModelViewSet):
     queryset = Recommendation.objects.all()
     serializer_class = RecommendationSerializer
     authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCoachOrAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        get_user_related_field('client'),
+        get_user_related_field('coach')]
 
 
 
 class MealViewSet(viewsets.ModelViewSet):
     queryset = Meal.objects.all()
     serializer_class = MealSerializer
+    authentication_classes = [BasicAuthentication]
+    permission_classes = [IsCoachOrAdminOrReadOnly]
     filter_backends = [filters.SearchFilter]
     pagination_class = CustomPagination
-    search_fields = ['client__name', 'coach__name']
+    search_fields = ['workout_plan__name']
     lookup_field = 'slug'
     @extend_schema(
         description="This endpoint allow updating a specific meal attributes or totally",)
@@ -62,3 +68,10 @@ class WorkoutplanViewSet(viewsets.ModelViewSet):
     queryset = Workoutplan.objects.all()
     serializer_class = WorkoutplanSerializer
     lookup_field = 'slug'
+    authentication_classes = [BasicAuthentication]
+    permission_classes = [IsCoachOrAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        get_user_related_field('client'),
+        get_user_related_field('coach')]
+

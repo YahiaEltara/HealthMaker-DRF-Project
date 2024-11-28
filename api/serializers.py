@@ -35,9 +35,9 @@ class MealSerializer(serializers.ModelSerializer):
 
 class WorkoutplanSerializer(serializers.ModelSerializer):
     client = serializers.SlugRelatedField(queryset=Client.objects.all(), slug_field='user__username')
-    coaches = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
+    coach = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
     meals = MealSerializer(many=True, read_only=True)
 
     class Meta:
         model = Workoutplan
-        fields = ['client', 'coaches', 'name', 'details', 'duration', 'target_calories_burned', 'created_at', 'slug', 'meals', ]
+        fields = ['client', 'coach', 'name', 'details', 'duration', 'target_calories_burned', 'created_at', 'slug', 'meals', ]
