@@ -21,7 +21,7 @@ class CoachAdmin(admin.ModelAdmin):
 
 
 class RecommendationAdmin(admin.ModelAdmin):
-    list_display = ('client', 'coach', 'created_at')
+    list_display = ('id', 'client', 'coach', 'created_at')
     list_filter = ('client', 'coach',)
     search_fields = ['client__user__username', 'coach__user__username',]
     ordering = ['-created_at']

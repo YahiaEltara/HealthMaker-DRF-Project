@@ -10,7 +10,7 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        exclude_fields = ['id']
+        exclude_fields = ['id', 'created_at',]
         for field in exclude_fields:
             self.fields.pop(field, None)
 
@@ -23,7 +23,7 @@ class CoachSerializer(serializers.ModelSerializer):
         fields = '__all__'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        exclude_fields = ['id']
+        exclude_fields = ['id', 'created_at',]
         for field in exclude_fields:
             self.fields.pop(field, None)
 
@@ -36,7 +36,7 @@ class RecommendationSerializer(serializers.ModelSerializer):
         fields = '__all__'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        exclude_fields = ['id']
+        exclude_fields = ['created_at',]
         for field in exclude_fields:
             self.fields.pop(field, None)
 
@@ -49,7 +49,7 @@ class MealSerializer(serializers.ModelSerializer):
         fields = '__all__'
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        exclude_fields = ['id']
+        exclude_fields = ['id', 'created_at',]
         for field in exclude_fields:
             self.fields.pop(field, None)
 
@@ -61,4 +61,4 @@ class WorkoutplanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Workoutplan
-        fields = ['client', 'coach', 'name', 'details', 'duration', 'target_calories_burned', 'created_at', 'slug', 'meals', ]
+        fields = ['client', 'coach', 'name', 'details', 'duration', 'target_calories_burned', 'slug', 'meals', ]

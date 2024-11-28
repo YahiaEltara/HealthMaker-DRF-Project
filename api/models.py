@@ -4,6 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
+import uuid
 
 
 
@@ -52,6 +53,7 @@ class Coach(models.Model):
 
 
 class Recommendation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # Unique identifier
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="recommendation_client")
     coach = models.ForeignKey(Coach, on_delete=models.CASCADE, related_name="recommendation_coach")
     recommendation_text = models.TextField()

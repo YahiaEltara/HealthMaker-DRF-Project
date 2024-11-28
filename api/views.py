@@ -17,6 +17,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     authentication_classes = [BasicAuthentication]
     permission_classes = [IsClientOrAdminOrReadOnly]
+    lookup_field = 'user__username'
 
 
 
@@ -26,7 +27,7 @@ class CoachViewSet(viewsets.ModelViewSet):
     serializer_class = CoachSerializer
     authentication_classes = [BasicAuthentication]
     permission_classes = [IsCoachOrAdminOrReadOnly]
-
+    lookup_field = 'user__username'
 
 
 class RecommendationViewSet(viewsets.ModelViewSet):
