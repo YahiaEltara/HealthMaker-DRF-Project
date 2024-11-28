@@ -3,21 +3,42 @@ from rest_framework import serializers
 
 
 class ClientSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(queryset=Client.objects.all(), slug_field='username')
+    coach = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
     class Meta:
         model = Client
         fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        exclude_fields = ['id']
+        for field in exclude_fields:
+            self.fields.pop(field, None)
 
 
 class CoachSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='username')
+
     class Meta:
         model = Coach
         fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        exclude_fields = ['id']
+        for field in exclude_fields:
+            self.fields.pop(field, None)
 
 
 class RecommendationSerializer(serializers.ModelSerializer):
+    client = serializers.SlugRelatedField(queryset=Client.objects.all(), slug_field='user__username')
+    coach = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
     class Meta:
         model = Recommendation
         fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        exclude_fields = ['id']
+        for field in exclude_fields:
+            self.fields.pop(field, None)
 
 
 class MealSerializer(serializers.ModelSerializer):
