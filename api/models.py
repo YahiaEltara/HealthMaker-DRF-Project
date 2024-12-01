@@ -7,39 +7,12 @@ from django.utils.text import slugify
 import uuid
 
 
-
-class Client(models.Model):
-    choices = (
-        ('maintain', 'Maintain'),
-        ('lose weight', 'Lose Weight'),
-        ('gain muscle', 'Gain Muscle'),
-        ('build muscle', 'Build Muscle'),)
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    email = models.EmailField(max_length=20)
-    age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
-    gender = models.CharField(max_length=255, choices= [('male', 'Male'),('female', 'Female')])
-    weight = models.FloatField()
-    height = models.FloatField()
-    fitness_goal = models.CharField(max_length=255, choices= choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    coach = models.ForeignKey('Coach', on_delete=models.PROTECT)
-
-    def __str__(self):
-        return self.user.username
-    class Meta:
-        indexes = [
-            models.Index(fields=  ['user', 'coach']),
-        ]
-
-
-
-
 class Coach(models.Model):
+    gender_choices= [('male', 'Male'),('female', 'Female')]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    email = models.EmailField(max_length=20)
+    gender = models.CharField(max_length=255, choices= gender_choices)
     age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
-    gender = models.CharField(max_length=255, choices= [('male', 'Male'),('female', 'Female')])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -51,16 +24,45 @@ class Coach(models.Model):
 
 
 
+        
+class Client(models.Model):
+    gender_choices= [('male', 'Male'),('female', 'Female')]
+    goal_choices = (
+        ('maintain', 'Maintain'),
+        ('lose weight', 'Lose Weight'),
+        ('gain muscle', 'Gain Muscle'),
+        ('build muscle', 'Build Muscle'),)
 
-class Recommendation(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # Unique identifier
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="recommendation_client")
-    coach = models.ForeignKey(Coach, on_delete=models.CASCADE, related_name="recommendation_coach")
-    recommendation_text = models.TextField()
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    coach = models.ForeignKey(Coach, on_delete=models.PROTECT, related_name='clients')
+    gender = models.CharField(max_length=20, choices= gender_choices)
+    age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
+    weight = models.FloatField()
+    height = models.FloatField()
+    goal = models.CharField(max_length=20, choices= goal_choices)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'client: {str(self.client)} - coach: {str(self.coach)} recommendation'
+        return self.user.username
+    class Meta:
+        indexes = [
+            models.Index(fields=  ['user', 'coach']),
+        ]
+
+
+
+
+class Recommendation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # Unique identifier
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    coach = models.ForeignKey(Coach, on_delete=models.CASCADE)
+    title = models.CharField(max_length=25)
+    details = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'recommendation: {self.title} client: {str(self.client)} - coach: {str(self.coach)}'
     class Meta:
         indexes = [
             models.Index(fields=  ['client', 'coach']),
@@ -70,23 +72,32 @@ class Recommendation(models.Model):
 
 
 
-class Workoutplan(models.Model):
-    client = models.OneToOneField(Client, max_length=255, on_delete=models.CASCADE, related_name="workoutplan")
+class Workout_Plan(models.Model):
+    workout_choices=[
+        ('GYM & Cardio', 'GYM & Cardio'),
+        ('GYM', 'GYM'),
+        ('Cardio', 'Cardio'),
+        ('Special Sport', 'Special Sport'),]
+
+    client = models.OneToOneField(Client, on_delete=models.CASCADE,  related_name='workout_plans')
     coach = models.ForeignKey(Coach, on_delete=models.PROTECT)
-    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=255, choices= workout_choices)
     details = models.TextField()
     duration = models.TextField(help_text= 'minutes/once', max_length=255)
-    target_calories_burned = models.FloatField()
+    target_calories = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(blank=True, db_index=True)
     def save (self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(str(self.name))
-        super(Workoutplan, self).save(*args, **kwargs)
+            self.slug = slugify(f'{self.type}-{self.client}')
+        super(Workout_Plan, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f'Workout Plan: "{str(self.name)}" - client: {str(self.client)} - coach: {str(self.coach)}'
+        return f'Workout Plan: "{str(self.type)}" - Client: {str(self.client)} - Coach: {str(self.coach)}'
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields= ['type', 'client', ], name= 'unique_type'),
+        ]
         indexes = [
             models.Index(fields=  ['client', 'coach']),
         ]
@@ -103,26 +114,28 @@ class Meal(models.Model):
         ('Dinner', 'Dinner'),
         ('Snack', 'Snack'),]
 
-    meal_type = models.CharField(max_length=255, choices= choices)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    coach = models.ForeignKey(Coach, on_delete=models.CASCADE)
+    workout_plan = models.ForeignKey(Workout_Plan, on_delete=models.PROTECT, related_name='meals')
+    type = models.CharField(max_length=255, choices= choices)
     food_items = models.TextField()
     total_calories = models.FloatField()
     eating_time = models.TimeField()
     created_at = models.DateField(auto_now_add=True)
-    workout_plan = models.ForeignKey(Workoutplan, on_delete=models.PROTECT, related_name= 'meals', blank= True, null=True)
     slug = models.SlugField(blank=True, db_index=True)
     def save (self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.meal_type)
+            self.slug = slugify(f'{self.type}-{self.client}')
         super(Meal, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.meal_type} for {self.workout_plan.client}'
+        return f'{self.type} for {self.client}'
     
     class Meta:
         ordering = ['eating_time']
         constraints = [
-            models.UniqueConstraint(fields= ['meal_type', 'workout_plan'], name= 'unique_meal_user'),
+            models.UniqueConstraint(fields= ['type', 'client', 'coach', ], name= 'unique_meal_user'),
         ]
         indexes = [
-            models.Index(fields=  ['meal_type', 'workout_plan']),
+            models.Index(fields=  ['type', 'workout_plan']),
         ]

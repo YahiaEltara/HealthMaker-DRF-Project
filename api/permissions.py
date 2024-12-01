@@ -1,88 +1,63 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from jsonschema import ValidationError
+from rest_framework import viewsets
+from .models import Coach, Client, Workout_Plan
+from rest_framework.response import Response
 
 
 
 
-class IsClientOrAdminOrReadOnly(BasePermission):
+
+class DefaultPermission(BasePermission):
     """
-    Custom permission:
-    - Admin users have full access.
-    - Clients can perform any request method (full access).
-    - Coaches are restricted to SAFE_METHODS (GET, OPTIONS, HEAD).
-    - Other users have no access.
+    Allow authenticated clients to use GET methods for their objects only,
+    and allow authenticated coaches full access to their objects only.
     """
     def has_permission(self, request, view):
-        # Admin users always have full access
-        if request.user.is_staff:
+        user = request.user
+        if hasattr(user, 'client') and request.method == 'GET':
             return True
+        if hasattr(user, 'coach'):
+            if request.method in ['POST', 'PUT', 'DELETE']:
+                # Restrict coaches to interacting with their own clients only
+                client_username = request.data.get('client')
+                coach_assigned = request.data.get('coach')
+                workout_plan = request.data.get('workout_plan')
 
-        # Clients have full access to any request method
-        if hasattr(request.user, 'client'):
-            return True
+                if workout_plan:
+                    try:
+                        # Ensure workout_plan belongs to the provided client
+                        workout_plan = Workout_Plan.objects.get(type=workout_plan)
+                        client = Client.objects.get(user__username=client_username)
+                        if workout_plan.client != client:
+                            return False
+                    except (Workout_Plan.DoesNotExist, Client.DoesNotExist):
+                        return False
 
-        # Coaches are restricted to safe methods only
-        if hasattr(request.user, 'coach'):
-            return request.method in SAFE_METHODS
-
-        # Other users are denied access
+                if coach_assigned != str(user.coach):  # Ensure the coach assigns themselves and not another coach
+                    return False
+                if user.coach.clients.filter(user__username=client_username).exists():
+                    return True
+                return False
+            return True  # Allow other methods like GET for coaches
         return False
 
     def has_object_permission(self, request, view, obj):
-        # Admin users always have full access
-        if request.user.is_staff:
-            return True
-
-        # Clients can access any object
-        if hasattr(request.user, 'client'):
-            return True
-
-        # Coaches are restricted to safe methods only
-        if hasattr(request.user, 'coach'):
-            return request.method in SAFE_METHODS
-
-        # Other users are denied access
+        user = request.user
+        if hasattr(user, 'client') and request.method == 'GET':
+            return obj.client == user.client
+        if hasattr(user, 'coach'):
+            return obj.coach == user.coach
         return False
+    @staticmethod
+    def get_filtered_queryset(queryset, user):
+        """
+        Filters the queryset to include only objects belonging to the authenticated client.
+        """
+        if hasattr(user, 'client'):
+            return queryset.filter(client=user.client)
+        elif hasattr(user, 'coach'):
+            return queryset.filter(coach=user.coach)
+        return queryset.none()
     
-
-
-
-class IsCoachOrAdminOrReadOnly(BasePermission):
-    """
-    Custom permission:
-    - Admin users have full access.
-    - Coaches can perform any request method (full access).
-    - Clients are restricted to SAFE_METHODS (GET, OPTIONS, HEAD).
-    - Other users have no access.
-    """
-    def has_permission(self, request, view):
-        # Admin users always have full access
-        if request.user.is_staff:
-            return True
-
-        # Coaches have full access to any request method
-        if hasattr(request.user, 'coach'):
-            return True
-
-        # Clients are restricted to safe methods only
-        if hasattr(request.user, 'client'):
-            return request.method in SAFE_METHODS
-
-        # Other users are denied access
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        # Admin users always have full access
-        if request.user.is_staff:
-            return True
-
-        # Coaches can access any object
-        if hasattr(request.user, 'coach'):
-            return True
-
-        # Clients are restricted to safe methods only
-        if hasattr(request.user, 'client'):
-            return request.method in SAFE_METHODS
-
-        # Other users are denied access
-        return False
 
