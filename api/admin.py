@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import Client, Coach, Recommendation, Workout_Plan, Meal
-from django.contrib.auth.models import User
+from .models import Client, Coach, Recommendation, Workout_Plan, Meal, User
+# from django.contrib.auth.models import User
 
 
 
@@ -58,3 +58,4 @@ admin.site.register(Coach, CoachAdmin)
 admin.site.register(Recommendation, RecommendationAdmin)
 admin.site.register(Workout_Plan, Workout_PlanAdmin)
 admin.site.register(Meal, MealAdmin)
+admin.site.register(User)

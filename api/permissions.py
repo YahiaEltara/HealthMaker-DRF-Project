@@ -15,6 +15,8 @@ class DefaultPermission(BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
+        print(f"Authenticated user: {user}")
+
         if hasattr(user, 'client') and request.method == 'GET':
             return True
         if hasattr(user, 'coach'):
@@ -61,3 +63,81 @@ class DefaultPermission(BasePermission):
         return queryset.none()
     
 
+class ClientPermission (BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+
+        if hasattr(user, 'client'):
+            return True
+        
+        elif hasattr(user, 'coach') and request.method == 'GET':
+            return True
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if hasattr(user, 'client'):
+            return obj.user.username == user.username
+        
+        elif hasattr(user, 'coach') and request.method == 'GET':
+            return obj.coach == user.coach
+        
+        return False
+    @staticmethod
+    def get_filtered_queryset(queryset, user):
+        """
+        Filters the queryset to include only objects belonging to the authenticated client.
+        """
+        if hasattr(user, 'client'):
+            return queryset.filter(user__username=user.username)
+        
+        elif hasattr(user, 'coach'):
+            return queryset.filter(coach=user.coach)
+        
+        return queryset.none()
+        
+# class CoachPermission (BasePermission):
+#     def has_permission(self, request, view):
+#         user = request.user
+
+#         if hasattr(user, 'coach'):
+#             return True
+        
+#         elif hasattr(user, 'client') and request.method == 'GET':
+#             return True
+#         return False
+    
+#     def has_object_permission(self, request, view, obj):
+#         user = request.user
+
+#         if hasattr(user, 'client') and request.method == 'GET':
+#             return obj.client == user.client
+        
+#         elif hasattr(user, 'coach'):
+#             return obj.coach == user.coach
+        
+#         return False
+    
+#     @staticmethod
+#     def get_filtered_queryset(queryset, user):
+#         """
+#         Filters the queryset to include only objects belonging to the authenticated client.
+#         """
+#         if hasattr(user, 'client'):
+#             return queryset.filter(client=user.client)
+        
+#         elif hasattr(user, 'coach'):
+#             return queryset.filter(coach=user.coach)
+        
+#         return queryset.none()
+    
+# class AdminPermission (BasePermission):
+#     def has_permission(self, request, view):
+#         user = request.user
+#         return user.is_staff
+        
+#     def has_object_permission(self, request, view, obj):
+#         user = request.user
+#         return user.is_staff
