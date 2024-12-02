@@ -4,77 +4,66 @@ from rest_framework import serializers
 # from django.contrib.auth.models import User
 
 
-
-
-# class UserRegistrationSerializer(serializers.Serializer):
-#     role_choices=[('client', 'client'), ('coach', 'coach')]
-#     gender_choices= [('male', 'Male'),('female', 'Female')]
-#     goal_choices= [('Lose Weight', 'Lose Weight'),('Build Muscles', 'Build Muscles'), ('Specific Program', 'Specific Program')]
-
-#     # Generic fields
-#     username = serializers.CharField()
-#     password = serializers.CharField(write_only=True)
-#     role = serializers.ChoiceField(choices=role_choices)
-#     gender = serializers.ChoiceField(choices=gender_choices,)
-#     age = serializers.IntegerField()
-
-#     # Specific fields in case of 'client' role
-#     goal = serializers.ChoiceField(required=False, choices=goal_choices)
-#     weight = serializers.FloatField(required=False)
-#     height = serializers.FloatField(required=False)
-#     coach = serializers.ChoiceField(required=False, choices=[])
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         # Dynamically populate the coach choices
-#         self.fields['coach'].choices =  [
-#             (coach, f"{coach.user.username} (Age: {coach.age}, Gender: {coach.gender})")
-#             for coach in Coach.objects.all()    ]
-
-#     def validate(self, data):
-#         role = data.get('role')
-#         if role == 'client':
-#             if not data.get('goal') or not data.get('weight') or not data.get('height') or not data.get('coach'):
-#                 raise serializers.ValidationError("Client fields (goal, weight, height, coach) are required.")
-#         return data
-
-#     def create(self, validated_data):
-#         user = User.objects.create_user(
-#             username=validated_data['username'],
-#             password=validated_data['password'],
-#         )
-#         role = validated_data['role']
-        
-#         if role == 'client':
-#             coach = validated_data['coach']
-#             Client.objects.create(
-#                 user=user, coach=coach, gender=validated_data.get('gender'), age=validated_data.get('age'),
-#                 weight= validated_data.get('weight'), height= validated_data.get('height'), goal=validated_data.get('goal'),)
-            
-#         elif role == 'coach':
-#             Coach.objects.create(
-#                 user=user, gender=validated_data.get('gender'), age=validated_data.get('age'),)
-            
-#         return user
-
-
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    weight = serializers.FloatField(required=False, allow_null=True)
+    height = serializers.FloatField(required=False, allow_null=True)
+    fitness_goal = serializers.ChoiceField(choices=Client.GOAL_CHOICES, required=False, allow_blank=True)
+    coach = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ['username', 'password', 'role', 'gender', 'age']
+        fields = ['username', 'password', 'role', 'gender', 'age', 'weight', 'height', 'fitness_goal', 'coach']
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
+    def validate(self, attrs):
+        """
+        Ensure required fields are provided based on the role.
+        """
+        role = attrs.get('role')
+        if role == 'client':
+            missing_fields = []
+            if attrs.get('weight') is None:
+                missing_fields.append('weight')
+            if attrs.get('height') is None:
+                missing_fields.append('height')
+            if attrs.get('fitness_goal') is None:
+                missing_fields.append('fitness_goal')
+            if attrs.get('height') is None:
+                missing_fields.append('height')
+            if not attrs.get('coach'):
+                missing_fields.append('coach')
+
+            if missing_fields:
+                raise serializers.ValidationError(
+                    {field: f"{field} is required for the 'client' role." for field in missing_fields})
+    
+            coach_username = attrs.get('coach')
+            try:
+                coach_user = User.objects.get(username=coach_username)
+                if not hasattr(coach_user, 'coach'):
+                    raise serializers.ValidationError({'coach': 'The provided username does not belong to a coach.'})
+            except User.DoesNotExist:
+                raise serializers.ValidationError({'coach': 'No user found with the provided username.'})
+
+            attrs['coach'] = coach_user.coach  # Replace username with Coach object
+
+        return attrs
+
     def create(self, validated_data):
         role = validated_data.pop('role')
+        weight = validated_data.pop('weight', None)
+        height = validated_data.pop('height', None)
+        fitness_goal = validated_data.pop('fitness_goal', None)
+        coach = validated_data.pop('coach', None)
+
         user = User.objects.create_user(**validated_data, role=role)
 
         if role == 'client':
             Client.objects.create(
-                user=user,
-                gender=validated_data.get('gender'),
-                age=validated_data.get('age'),
+                user=user, coach = coach, gender=validated_data.get('gender'), age=validated_data.get('age'),
+                weight=weight, height=height, goal=fitness_goal
             )
         elif role == 'coach':
             Coach.objects.create(

@@ -5,24 +5,24 @@ from django.dispatch import receiver
 from django.utils.text import slugify
 import uuid
 from django.contrib.auth.models import AbstractUser      , Group
-from .utils import ApiUserManager
+# from .utils import ApiUserManager
 
 
 class User(AbstractUser):
-    gender_choices= [('male', 'Male'),('female', 'Female')]
-    ROLE_CHOICES = [
-        ('client', 'Client'),
-        ('coach', 'Coach'),
-    ]
-    gender = models.CharField(max_length=20, choices= gender_choices)
+    GENDER_CHOICES= [('male', 'Male'),('female', 'Female')]
+    ROLE_CHOICES = [('client', 'client'), ('coach', 'coach')]
+    
+    gender = models.CharField(max_length=20, choices= GENDER_CHOICES)
     age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-
-    objects = ApiUserManager()
-
+    # objects = ApiUserManager()
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+    class Meta:
+        indexes = [
+            models.Index(fields=  ['username', ]),
+        ]
 
     
     
@@ -45,18 +45,16 @@ class Coach(models.Model):
 
         
 class Client(models.Model):
-    gender_choices= [('male', 'Male'),('female', 'Female')]
-    goal_choices= {'Lose Weight' : 'Lose Weight','Build Muscles' : 'Build Muscles', 'Specific Program' : 'Specific Program'}
-
-
+    GENDER_CHOICES= [('male', 'Male'),('female', 'Female')]
+    GOAL_CHOICES= GOAL_CHOICES = [('Lose Weight', 'Lose Weight'), ('Build Muscles', 'Build Muscles'), ('Special Program', 'Special Program'),]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     coach = models.ForeignKey(Coach, on_delete=models.PROTECT, related_name='clients')
-    gender = models.CharField(max_length=20, choices= gender_choices)
+    gender = models.CharField(max_length=20, choices= GENDER_CHOICES)
     age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
-    # weight = models.FloatField()
-    # height = models.FloatField()
-    goal = models.CharField(max_length=20, choices = goal_choices)
+    weight = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(180)])
+    height = models.PositiveIntegerField(validators=[MinValueValidator(50), MaxValueValidator(250)])
+    goal = models.CharField(max_length=20, choices = GOAL_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

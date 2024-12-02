@@ -24,7 +24,7 @@ class UserRegistrationViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "User registered successfully.",
                 "username": user.username,
-                "role": request.data.get("role")}, status=status.HTTP_201_CREATED,
+                "role": user.role}, status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
