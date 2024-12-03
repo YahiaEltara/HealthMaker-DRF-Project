@@ -35,10 +35,11 @@ class DefaultPermission(BasePermission):
                             return False
                     except (Workout_Plan.DoesNotExist, Client.DoesNotExist):
                         return False
-
-                if coach_assigned != str(user.coach):  # Ensure the coach assigns themselves and not another coach
+                
+                if coach_assigned != str(user.coach):  # Compare the username
                     return False
-                if user.coach.clients.filter(user__username=client_username).exists():
+                if_existed_user = user.coach.clients.filter(user__username=client_username).exists()
+                if if_existed_user:
                     return True
                 return False
             return True  # Allow other methods like GET for coaches

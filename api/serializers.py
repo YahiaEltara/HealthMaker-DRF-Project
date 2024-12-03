@@ -1,4 +1,4 @@
-from jsonschema import ValidationError
+from rest_framework.exceptions import ValidationError
 from .models import Client, Coach, Recommendation, Meal, Workout_Plan, User
 from rest_framework import serializers
 # from django.contrib.auth.models import User
@@ -134,13 +134,24 @@ class Workout_PlanSerializer(serializers.ModelSerializer):
     client = serializers.SlugRelatedField(queryset=Client.objects.all(), slug_field='user__username')
     coach = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
     meals = MealSerializer(many=True, read_only=True)
+    type = serializers.ChoiceField(choices=Workout_Plan.WORKOUT_CHOICES)  # Automatically validates against choices
 
     class Meta:
         model = Workout_Plan
         fields = ['client', 'coach', 'type', 'details', 'duration', 'target_calories', 'slug', 'meals', ]
     def validate(self, data):
-        # Check if a workout plan already exists for the client
+        """
+        Check if a workout plan already exists for the provided client in POST request
+        """
+        request_method = self.context['request'].method  # Get the request method (POST/PUT)
         client = data.get('client')
-        if Workout_Plan.objects.filter(client=client).exists():
-            raise ValidationError({"message": "Each Client Can Have Only One Workout Plan .."})
+        coach = data.get('coach')
+        
+        if request_method == 'POST':  # Validation logic for POST request
+
+            if client.coach != coach:
+                raise ValidationError({"message": "The provided coach does not match the client's assigned coach."})
+            if Workout_Plan.objects.filter(client=client).exists():
+                raise ValidationError({"message": "This client already has a workout plan .."})
+            
         return data

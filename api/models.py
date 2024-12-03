@@ -87,7 +87,7 @@ class Recommendation(models.Model):
 
 
 class Workout_Plan(models.Model):
-    workout_choices=[
+    WORKOUT_CHOICES=[
         ('GYM & Cardio', 'GYM & Cardio'),
         ('GYM', 'GYM'),
         ('Cardio', 'Cardio'),
@@ -95,7 +95,7 @@ class Workout_Plan(models.Model):
 
     client = models.OneToOneField(Client, on_delete=models.CASCADE,  related_name='workout_plans')
     coach = models.ForeignKey(Coach, on_delete=models.PROTECT)
-    type = models.CharField(max_length=255, choices= workout_choices)
+    type = models.CharField(max_length=255, choices= WORKOUT_CHOICES)
     details = models.TextField()
     duration = models.TextField(help_text= 'minutes/once', max_length=255)
     target_calories = models.IntegerField()

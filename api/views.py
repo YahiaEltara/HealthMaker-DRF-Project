@@ -102,7 +102,7 @@ class WorkoutplanViewSet(viewsets.ModelViewSet):
     queryset = Workout_Plan.objects.all()
     serializer_class = Workout_PlanSerializer
     lookup_field = 'slug'
-    authentication_classes = [BasicAuthentication]
+    # authentication_classes = [BasicAuthentication]
     permission_classes = [DefaultPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = [
