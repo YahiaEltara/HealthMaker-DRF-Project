@@ -46,7 +46,7 @@ class Coach(models.Model):
         
 class Client(models.Model):
     GENDER_CHOICES= [('male', 'Male'),('female', 'Female')]
-    GOAL_CHOICES= GOAL_CHOICES = [('Lose Weight', 'Lose Weight'), ('Build Muscles', 'Build Muscles'), ('Special Program', 'Special Program'),]
+    GOAL_CHOICES = [('Lose Weight', 'Lose Weight'), ('Build Muscles', 'Build Muscles'), ('Special Program', 'Special Program'),]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     coach = models.ForeignKey(Coach, on_delete=models.CASCADE, related_name='clients')
