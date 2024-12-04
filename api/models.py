@@ -1,11 +1,12 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import slugify
 import uuid
-from django.contrib.auth.models import AbstractUser      , Group
+from django.contrib.auth.models import AbstractUser
 # from .utils import ApiUserManager
+
 
 
 class User(AbstractUser):
@@ -18,7 +19,7 @@ class User(AbstractUser):
     # objects = ApiUserManager()
 
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        return self.username
     class Meta:
         indexes = [
             models.Index(fields=  ['username', ]),
@@ -42,14 +43,13 @@ class Coach(models.Model):
         ]
 
 
-
         
 class Client(models.Model):
     GENDER_CHOICES= [('male', 'Male'),('female', 'Female')]
     GOAL_CHOICES= GOAL_CHOICES = [('Lose Weight', 'Lose Weight'), ('Build Muscles', 'Build Muscles'), ('Special Program', 'Special Program'),]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    coach = models.ForeignKey(Coach, on_delete=models.PROTECT, related_name='clients')
+    coach = models.ForeignKey(Coach, on_delete=models.CASCADE, related_name='clients')
     gender = models.CharField(max_length=20, choices= GENDER_CHOICES)
     age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
     weight = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(180)])
@@ -63,7 +63,6 @@ class Client(models.Model):
         indexes = [
             models.Index(fields=  ['user', 'coach']),
         ]
-
 
 
 
@@ -84,8 +83,6 @@ class Recommendation(models.Model):
 
 
 
-
-
 class Workout_Plan(models.Model):
     WORKOUT_CHOICES=[
         ('GYM & Cardio', 'GYM & Cardio'),
@@ -94,7 +91,7 @@ class Workout_Plan(models.Model):
         ('Special Sport', 'Special Sport'),]
 
     client = models.OneToOneField(Client, on_delete=models.CASCADE,  related_name='workout_plans')
-    coach = models.ForeignKey(Coach, on_delete=models.PROTECT)
+    coach = models.ForeignKey(Coach, on_delete=models.CASCADE)
     type = models.CharField(max_length=255, choices= WORKOUT_CHOICES)
     details = models.TextField()
     duration = models.TextField(help_text= 'minutes/once', max_length=255)
@@ -116,9 +113,6 @@ class Workout_Plan(models.Model):
             models.Index(fields=  ['client', 'coach']),
         ]
     
-
-
-
 
 
 class Meal(models.Model):
@@ -153,3 +147,10 @@ class Meal(models.Model):
         indexes = [
             models.Index(fields=  ['type', 'workout_plan']),
         ]
+
+
+
+@receiver(post_delete, sender=Client)
+def delete_user_on_client_delettion(sender, instance, **kwargs):
+    if instance.user:
+        instance.user.delete()

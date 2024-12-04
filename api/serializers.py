@@ -1,7 +1,9 @@
 from rest_framework.exceptions import ValidationError
 from .models import Client, Coach, Recommendation, Meal, Workout_Plan, User
 from rest_framework import serializers
-# from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -10,14 +12,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     fitness_goal = serializers.ChoiceField(choices=Client.GOAL_CHOICES, required=False, allow_blank=True)
     coach = serializers.CharField(required=False, allow_blank=True)
 
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'}, label="Confirm Password")
+
     class Meta:
         model = User
-        fields = ['username', 'password', 'role', 'gender', 'age', 'weight', 'height', 'fitness_goal', 'coach']
+        fields = ['username', 'password', 'password2', 'role', 'gender', 'age', 'weight', 'height', 'fitness_goal', 'coach']
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
     def validate(self, attrs):
+        # Check if passwords match
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Passwords do not match."})
+        
+        # Validate password strength
+        try:
+            validate_password(attrs['password'])
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": e.messages})
+
         """
         Ensure required fields are provided based on the role.
         """
@@ -58,7 +73,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fitness_goal = validated_data.pop('fitness_goal', None)
         coach = validated_data.pop('coach', None)
 
-        user = User.objects.create_user(**validated_data, role=role)
+        validated_data.pop('password2')  # Remove the confirmation password
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+            gender=validated_data['gender'],
+            age=validated_data['age'],
+            role=role,
+        )
 
         if role == 'client':
             Client.objects.create(
@@ -74,8 +96,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         return user
     
+
 class CoachSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='username')
+    user = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
 
     class Meta:
         model = Coach
@@ -88,12 +111,12 @@ class CoachSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(queryset=Client.objects.all(), slug_field='username')
+    user = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
     coach = serializers.SlugRelatedField(queryset=Coach.objects.all(), slug_field='user__username')
 
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = ['user', 'gender', 'age', 'weight', 'height', 'goal', 'coach']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         exclude_fields = ['id', 'created_at',]

@@ -1,6 +1,38 @@
 from django.contrib import admin
 from .models import Client, Coach, Recommendation, Workout_Plan, Meal, User
-# from django.contrib.auth.models import User
+# from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.admin import UserAdmin
+
+
+
+class CustomUserAdmin(UserAdmin):
+    model = User
+    # Customize the fields to display in the admin panel
+    fieldsets = (
+        (None, {'fields': ('username', 'password', 'age', 'gender', 'role')}),
+    )
+    # Customize the fields for the add user form
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'gender', 'age', 'role'),
+        }),
+    )
+    list_display = ('username', 'is_staff', 'gender', 'age', 'role')
+    list_filter = ('is_staff', 'is_active', 'groups', 'gender', 'role')
+    search_fields = ('username', 'role')
+    ordering = ('username',)
+    def save_model(self, request, obj, form, change):
+        # Hash the password if it is being updated
+        if form.cleaned_data.get('password1'):
+            obj.set_password(form.cleaned_data['password1'])
+        super().save_model(request, obj, form, change)
+
+    def save_form(self, request, form, change):
+        obj = super().save_form(request, form, change)
+        if not change:  # If it's a new user
+            obj.set_password(form.cleaned_data['password1'])
+        return obj
 
 
 
@@ -58,4 +90,4 @@ admin.site.register(Coach, CoachAdmin)
 admin.site.register(Recommendation, RecommendationAdmin)
 admin.site.register(Workout_Plan, Workout_PlanAdmin)
 admin.site.register(Meal, MealAdmin)
-admin.site.register(User)
+admin.site.register(User, CustomUserAdmin)

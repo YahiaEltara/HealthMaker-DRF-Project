@@ -1,12 +1,11 @@
 from rest_framework import viewsets, status, filters
 from .models import Client, Coach, Recommendation, Meal, Workout_Plan
 from . serializers import UserRegistrationSerializer, ClientSerializer, CoachSerializer, RecommendationSerializer, MealSerializer, Workout_PlanSerializer
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .utils import CustomPagination, get_user_related_field
 from drf_spectacular.utils import extend_schema
-from .permissions import DefaultPermission, ClientPermission#, CoachPermission, AdminPermission
+from .permissions import DefaultPermission, ClientPermission, CoachPermission, AdminPermission
 
 
 
@@ -30,33 +29,38 @@ class UserRegistrationViewSet(viewsets.ViewSet):
 
 
 
-
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
-    # authentication_classes = [BasicAuthentication]
-    permission_classes = [ClientPermission]
+    permission_classes = [ClientPermission | AdminPermission]
     lookup_field = 'user__username'
     def get_queryset(self):
         user = self.request.user
         queryset = super().get_queryset()
+        if user.is_staff:
+            return queryset
         return ClientPermission.get_filtered_queryset(queryset, user)
-
 
 
 
 class CoachViewSet(viewsets.ModelViewSet):
     queryset = Coach.objects.all()
     serializer_class = CoachSerializer
-    authentication_classes = [BasicAuthentication]
-    # permission_classes = [IsCoachOrAdminOrReadOnly]
+    permission_classes = [CoachPermission | AdminPermission]
     lookup_field = 'user__username'
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        if user.is_staff:
+            return queryset
+        return CoachPermission.get_filtered_queryset(queryset, user)
+
 
 
 class RecommendationViewSet(viewsets.ModelViewSet):
     queryset = Recommendation.objects.all()
     serializer_class = RecommendationSerializer
-    authentication_classes = [BasicAuthentication]
+    permission_classes = [DefaultPermission | AdminPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = [
         get_user_related_field('client'),
@@ -64,6 +68,8 @@ class RecommendationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = super().get_queryset()
+        if user.is_staff:
+            return queryset
         return DefaultPermission.get_filtered_queryset(queryset, user)
 
 
@@ -71,17 +77,18 @@ class RecommendationViewSet(viewsets.ModelViewSet):
 class MealViewSet(viewsets.ModelViewSet):
     queryset = Meal.objects.all()
     serializer_class = MealSerializer
-    # authentication_classes = [BasicAuthentication]
-    # permission_classes = [DefaultPermission]
+    permission_classes = [DefaultPermission | AdminPermission]
+    pagination_class = CustomPagination
     filter_backends = [filters.SearchFilter]
-    # pagination_class = CustomPagination
     search_fields = ['type', 'workout_plan__type',]
     lookup_field = 'slug'
 
-    # def get_queryset(self):
-    #     user = self.request.user
-    #     queryset = super().get_queryset()
-    #     return DefaultPermission.get_filtered_queryset(queryset, user)
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        if user.is_staff:
+            return queryset
+        return DefaultPermission.get_filtered_queryset(queryset, user)
 
     
     @extend_schema(
@@ -102,8 +109,7 @@ class WorkoutplanViewSet(viewsets.ModelViewSet):
     queryset = Workout_Plan.objects.all()
     serializer_class = Workout_PlanSerializer
     lookup_field = 'slug'
-    # authentication_classes = [BasicAuthentication]
-    permission_classes = [DefaultPermission]
+    permission_classes = [DefaultPermission | AdminPermission]
     filter_backends = [filters.SearchFilter]
     search_fields = [
         get_user_related_field('client'),
@@ -111,5 +117,7 @@ class WorkoutplanViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = super().get_queryset()
+        if user.is_staff:
+            return queryset
         return DefaultPermission.get_filtered_queryset(queryset, user)
 

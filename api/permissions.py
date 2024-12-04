@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from jsonschema import ValidationError
+from rest_framework import serializers
 from rest_framework import viewsets
 from .models import Coach, Client, Workout_Plan
 from rest_framework.response import Response
@@ -26,7 +26,7 @@ class DefaultPermission(BasePermission):
                 coach_assigned = request.data.get('coach')
                 workout_plan = request.data.get('workout_plan')
 
-                if workout_plan:
+                if workout_plan: # Specific Condition to fit Workout_Plan Endpoint
                     try:
                         # Ensure workout_plan belongs to the provided client
                         workout_plan = Workout_Plan.objects.get(type=workout_plan)
@@ -69,7 +69,22 @@ class ClientPermission (BasePermission):
         user = request.user
 
         if hasattr(user, 'client'):
-            return True
+            if request.method == 'GET':
+                return True
+            elif request.method in ['PUT', 'DELETE']:     # Restrict clients to interact with their own clients only
+                client_username = request.data.get('user')
+                coach_assigned  = request.data.get('coach')
+                goal            = request.data.get('goal')
+
+                if goal not in Client.GOAL_CHOICES:     # Ensure goal is in Client.GOAL_CHOICES
+                    return Response({'message': 'The provided goal is not allowed.'})
+                if coach_assigned != str(user.coach):   # Compare the username
+                    return False
+                
+                if_existed_user = user.coach.clients.filter(user__username=client_username).exists()
+                if if_existed_user:
+                    return True
+            return False
         
         elif hasattr(user, 'coach') and request.method == 'GET':
             return True
@@ -79,8 +94,9 @@ class ClientPermission (BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if hasattr(user, 'client'):
-            return obj.user.username == user.username
+        if hasattr(user, 'client') and request.method != 'POST':
+            # print(str(obj.user) , user.username)   # checking
+            return str(obj.user) == user.username
         
         elif hasattr(user, 'coach') and request.method == 'GET':
             return obj.coach == user.coach
@@ -98,47 +114,63 @@ class ClientPermission (BasePermission):
             return queryset.filter(coach=user.coach)
         
         return queryset.none()
-        
-# class CoachPermission (BasePermission):
-#     def has_permission(self, request, view):
-#         user = request.user
 
-#         if hasattr(user, 'coach'):
-#             return True
-        
-#         elif hasattr(user, 'client') and request.method == 'GET':
-#             return True
-#         return False
-    
-#     def has_object_permission(self, request, view, obj):
-#         user = request.user
 
-#         if hasattr(user, 'client') and request.method == 'GET':
-#             return obj.client == user.client
+class CoachPermission (BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
         
-#         elif hasattr(user, 'coach'):
-#             return obj.coach == user.coach
+        if hasattr(user, 'client') and request.method == 'GET':
+            return True
         
-#         return False
+        elif hasattr(user, 'coach'):
+            if request.method == 'GET':
+                return True
+            elif request.method in ['PUT', 'DELETE']:
+                coach_username = request.data.get('user')
+                if Coach.objects.filter(user__username=coach_username).exists() and coach_username != user.username:
+                    raise serializers.ValidationError({"message": "The provided client is already existed."})
+                elif not Coach.objects.filter(user__username=user.username):
+                    raise serializers.ValidationError({"message": "The provided client does not exist."})
+            return True
+        return False
     
-#     @staticmethod
-#     def get_filtered_queryset(queryset, user):
-#         """
-#         Filters the queryset to include only objects belonging to the authenticated client.
-#         """
-#         if hasattr(user, 'client'):
-#             return queryset.filter(client=user.client)
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if hasattr(user, 'client') and request.method == 'GET':
+            return obj.user.username == str(user.client.coach)
         
-#         elif hasattr(user, 'coach'):
-#             return queryset.filter(coach=user.coach)
+        elif hasattr(user, 'coach') and request.method != 'POST':
+            return obj.user.username == user.username
         
-#         return queryset.none()
+        return False
     
-# class AdminPermission (BasePermission):
-#     def has_permission(self, request, view):
-#         user = request.user
-#         return user.is_staff
+    @staticmethod
+    def get_filtered_queryset(queryset, user):
+        """
+        Filters the queryset to include only objects belonging to the authenticated client.
+        """
+        if hasattr(user, 'client'):
+            return queryset.filter(user__username=user.client.coach)
         
-#     def has_object_permission(self, request, view, obj):
-#         user = request.user
-#         return user.is_staff
+        elif hasattr(user, 'coach'):
+            return queryset.filter(user__username=user.username)
+        
+        return queryset.none()
+
+
+class AdminPermission(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        # Only allow GET requests for admin users
+        if user.is_staff and request.method == 'GET':
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        # Only allow GET requests for admin users at the object level
+        if user.is_staff and request.method == 'GET':
+            return True
+        return False
