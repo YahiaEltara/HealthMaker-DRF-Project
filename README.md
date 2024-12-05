@@ -1,6 +1,6 @@
 # **HealthMaker-DRF-Project**
 
-![HealthMaker ERD](ERD (HealthMaker).png)
+!(ERD (HealthMaker).png)
 
 
 ## **User Flow**
