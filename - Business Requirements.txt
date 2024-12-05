@@ -62,6 +62,7 @@
 
     Admin:
             - can view any endpoint without any modification or addition or deletion.
+            - has full ability within admin panel.
 
 
 ###############################################################################
