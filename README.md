@@ -1,5 +1,8 @@
 # **HealthMaker-DRF-Project**
 
+![HealthMaker ERD](![HealthMaker Logo](path/to/your/image.png))
+
+
 ## **User Flow**
 The application allows **guests** to register via the **UserRegistration** endpoint. During registration, users provide their details and choose a role: **client** or **coach**. Upon successful registration, the guest becomes an **authenticated user** with a defined role. Each role grants specific actions and permissions, tailored to the user’s responsibilities. **Authenticated users** can access endpoints based on their role and associated permissions.
 
@@ -144,3 +147,4 @@ The **HealthMaker-DRF-Project** demonstrates best practices in **Django REST Fra
 
 **Admin**:  
 - View-only access to any endpoint (no add, edit, or delete).
+- Has full ability within admin panel.
