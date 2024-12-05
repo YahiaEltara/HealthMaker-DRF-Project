@@ -86,7 +86,7 @@ The **HealthMaker-DRF-Project** demonstrates best practices in **Django REST Fra
 
 ---
 
-## **Additional Details**
+## **Business Requirements**
 
 ### **User Management**
 - **Only dealing with users (logged users)**, not guests (just viewers).
