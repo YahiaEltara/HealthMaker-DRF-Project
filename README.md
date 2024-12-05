@@ -1,6 +1,6 @@
 # **HealthMaker-DRF-Project**
 
-![HealthMaker ERD](![HealthMaker Logo](path/to/your/image.png))
+![HealthMaker ERD](HealthMaker-DRF-Project/ERD (HealthMaker).png)
 
 
 ## **User Flow**
