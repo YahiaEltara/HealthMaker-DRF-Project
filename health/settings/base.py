@@ -1,18 +1,15 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&-kzun30(r%j&pwa%yj!f27&ag)=h64@^%80iobq968=0*d^0x'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -33,6 +30,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
 ]
+
+
+# DJANGO_SETTINGS_MODULE = health.settings.base
 
 
 REST_FRAMEWORK = {
