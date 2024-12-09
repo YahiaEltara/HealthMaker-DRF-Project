@@ -3,10 +3,17 @@
 import os
 import sys
 
-
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'health.settings')
+    # Get environment from environment variable (default to 'local')
+    environment = os.environ.get('ENVIRONMENT', 'local')
+
+    # Dynamically set DJANGO_SETTINGS_MODULE based on environment
+    if environment == 'production':
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'health.settings.production')
+    else:
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'health.settings.local')
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
