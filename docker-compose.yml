@@ -19,7 +19,7 @@ services:
   celery:
     container_name: celery
     build: .
-    command: celery -A project worker -l INFO 
+    command: celery -A health worker -l INFO 
     restart: always 
     depends_on:
       - redis
@@ -28,7 +28,7 @@ services:
   celery-beat:
     container_name: celery_beat
     build: .
-    command: celery -A project beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A health beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
     restart: always
     depends_on:
       - redis
