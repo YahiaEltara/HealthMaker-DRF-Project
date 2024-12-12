@@ -1,0 +1,35 @@
+# setup services 
+
+services:
+  djangoserver:
+    container_name: backend
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+
+  redis:
+    container_name: redis
+    image: redis:latest
+
+
+  celery:
+    container_name: celery
+    build: .
+    command: celery -A project worker -l INFO 
+    restart: always 
+    depends_on:
+      - redis
+
+
+  celery-beat:
+    container_name: celery_beat
+    build: .
+    command: celery -A project beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    restart: always
+    depends_on:
+      - redis
+      - celery

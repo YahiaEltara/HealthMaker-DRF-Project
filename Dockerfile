@@ -1,26 +1,23 @@
-# Use Python 3.12.6 image based on Debian Bullseye in its slim variant as the base image
+# 1: Start Docker kernel + Python
 FROM python:3.12.6-slim-bullseye
 
-# Set an environment variable to unbuffer Python output, aiding in logging and debugging
-ENV PYTHONBUFFERED=1
+# 2: ENV: Show logs
+ENV PYTHONUNBUFFERED=1
 
-# Define an environment variable for the web service's port, commonly used in cloud services
-ENV PORT 8080
+# 3: Update kernel + install dependencies
+RUN apt-get update && apt-get -y install gcc libpq-dev
 
-# Set the working directory within the container to /app for any subsequent commands
+# 4: Create project folder
 WORKDIR /app
 
-# Copy the entire current directory contents into the container at /app
+# 5: Copy requirements file
+COPY requirements.txt /app/requirements.txt
+
+# 6: Install Python dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# 7: Copy project code into the container
 COPY . /app/
 
-# Upgrade pip to ensure we have the latest version for installing dependencies
-RUN pip install --upgrade pip
-
-# Install dependencies from the requirements.txt file to ensure our Python environment is ready
-RUN pip install -r requirements.txt
-
-# Set the command to run our web service using Gunicorn, binding it to 0.0.0.0 and the PORT environment variable
-CMD gunicorn health.wsgi:application --bind 0.0.0.0:"${PORT}"
-
-# Inform Docker that the container listens on the specified network port at runtime
-EXPOSE ${PORT}
+# 8: Default command (can be overridden by docker-compose)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
