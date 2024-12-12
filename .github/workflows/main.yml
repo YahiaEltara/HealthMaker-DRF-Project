@@ -36,7 +36,7 @@ jobs:
     - name: Run Django Tests
       run: |
         source env/bin/activate
-        python manage.py pytest
+        pytest
 
     - name: Test Celery Tasks
       run: |
