@@ -58,7 +58,7 @@ class TestClientViewSet:
 
         # Case 3: Test DELETE (Allowed)
         response_delete = client_built.delete(f"{self.endpoint}{client.user.username}/")
-        assert response_delete.status_code == status.HTTP_200_OK
+        assert response_delete.status_code == status.HTTP_204_NO_CONTENT
 
         # Case 4: Test POST (Not allowed for client users)
         post_data = {
@@ -70,5 +70,3 @@ class TestClientViewSet:
         }
         response_post = client_built.post(self.endpoint, data=post_data, format="json")
         assert response_post.status_code == status.HTTP_403_FORBIDDEN
-
-        
