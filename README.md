@@ -75,6 +75,28 @@ When a client deletes their profile, the associated **user account** is automati
 
 ---
 
+### **Testing**
+- Implemented unit testing to verify individual components such as models, views.
+- Conducted endpoint testing to ensure all API routes perform as expected with valid, invalid, and edge-case data.
+- Used pytest for comprehensive testing, employing fixtures and mock data to simulate real-world scenarios.
+
+---
+
+### **Docker Integration**
+- Used Docker to containerize the application for consistent environment setup and streamlined deployment.
+- Created a Docker Compose file to simplify multi-container configurations for the application and database.
+
+---
+
+### **Continuous Integration and Deployment (CI/CD)**
+- Integrated GitHub Actions to automate testing, linting, and deployment pipelines.
+- Configured workflows to:
+  - Run tests automatically on code pushes or pull requests.
+  - Deploy the application to a staging or production environment upon successful test completion.
+  - Leveraged Docker in the CI/CD pipeline for efficient builds and deployments.
+
+---
+
 ### **Scalability and Maintainability**
 - Consolidated **custom permissions** into a `permissions.py` file for better organization and easier updates.
 - Designed the project to be **flexible**, enabling future enhancements with minimal code changes.
